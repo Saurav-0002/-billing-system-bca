@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — BillSys{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_sub %}{{ now.strftime('%A, %d %B %Y') if now else 'Today\'s Overview' }}{% endblock %}
+
+{% block content %}
+
+<!-- ── Phase 1 progress banner ──────────────────────── -->
+<div class="mb-6 p-4 rounded-2xl bg-navy text-white flex items-center justify-between gap-4 flex-wrap">
+  <div class="flex items-center gap-3">
+    <div class="w-9 h-9 rounded-lg bg-teal flex items-center justify-center flex-shrink-0">
+      <i data-lucide="layers" class="w-4 h-4 text-navy"></i>
+    </div>
+    <div>
+      <p class="font-display font-semibold text-sm">Phase 1 Active — Planning & Foundation</p>
+      <p class="text-teal-light text-xs">Login ✓ &nbsp;|&nbsp; Dashboard ✓ &nbsp;|&nbsp; Auth ✓ &nbsp;|&nbsp; Inventory (Phase 2) &nbsp;|&nbsp; Reports (Phase 3)</p>
+    </div>
+  </div>
+  <div class="flex gap-2">
+    <span class="text-xs px-3 py-1 rounded-full bg-teal/20 text-teal border border-teal/30">Phase 1 ✓</span>
+    <span class="text-xs px-3 py-1 rounded-full bg-white/5 text-white/30 border border-white/10">Phase 2</span>
+    <span class="text-xs px-3 py-1 rounded-full bg-white/5 text-white/30 border border-white/10">Phase 3</span>
+  </div>
+</div>
+
+<!-- ── Stat cards ────────────────────────────────────── -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+  <!-- Today's Sales -->
+  <div class="stat-card bg-white rounded-2xl p-5 shadow-card border border-gray-50">
+    <div class="flex items-start justify-between mb-3">
+      <div class="w-10 h-10 rounded-xl bg-teal/10 flex items-center justify-center">
+        <i data-lucide="indian-rupee" class="w-5 h-5 text-teal"></i>
+      </div>
+      <span class="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium">Today</span>
+    </div>
+    <p class="text-2xl font-display font-bold text-navy">
+      ₹{{ '{:,.0f}'.format(stats.today_revenue) }}
+    </p>
+    <p class="text-sm text-gray-400 mt-0.5">{{ stats.today_sales }} sale{{ 's' if stats.today_sales != 1 }}</p>
+  </div>
+
+  <!-- Users -->
+  <div class="stat-card bg-white rounded-2xl p-5 shadow-card border border-gray-50">
+    <div class="flex items-start justify-between mb-3">
+      <div class="w-10 h-10 rounded-xl bg-navy/10 flex items-center justify-center">
+        <i data-lucide="users" class="w-5 h-5 text-navy"></i>
+      </div>
+      <span class="text-xs bg-blue-50 text-blue-500 px-2 py-0.5 rounded-full font-medium">Active</span>
+    </div>
+    <p class="text-2xl font-display font-bold text-navy">{{ stats.total_users }}</p>
+    <p class="text-sm text-gray-400 mt-0.5">System users</p>
+  </div>
+
+  <!-- Low Stock -->
+  <div class="stat-card bg-white rounded-2xl p-5 shadow-card border border-gray-50">
+    <div class="flex items-start justify-between mb-3">
+      <div class="w-10 h-10 rounded-xl {% if stats.low_stock_count > 0 %}bg-amber-50{% else %}bg-gray-50{% endif %} flex items-center justify-center">
+        <i data-lucide="package-x" class="w-5 h-5 {% if stats.low_stock_count > 0 %}text-amber-500{% else %}text-gray-300{% endif %}"></i>
+      </div>
+      {% if stats.low_stock_count > 0 %}
+      <span class="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-medium animate-pulse">Alert</span>
+      {% else %}
+      <span class="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium">OK</span>
+      {% endif %}
+    </div>
+    <p class="text-2xl font-display font-bold {% if stats.low_stock_count > 0 %}text-amber-500{% else %}text-navy{% endif %}">
+      {{ stats.low_stock_count }}
+    </p>
+    <p class="text-sm text-gray-400 mt-0.5">Low stock items</p>
+  </div>
+
+  <!-- Pending Returns -->
+  <div class="stat-card bg-white rounded-2xl p-5 shadow-card border border-gray-50">
+    <div class="flex items-start justify-between mb-3">
+      <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+        <i data-lucide="undo-2" class="w-5 h-5 {% if stats.pending_returns > 0 %}text-red-400{% else %}text-gray-300{% endif %}"></i>
+      </div>
+      {% if stats.pending_returns > 0 %}
+      <span class="text-xs bg-red-50 text-red-500 px-2 py-0.5 rounded-full font-medium">Pending</span>
+      {% else %}
+      <span class="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium">Clear</span>
+      {% endif %}
+    </div>
+    <p class="text-2xl font-display font-bold {% if stats.pending_returns > 0 %}text-red-400{% else %}text-navy{% endif %}">
+      {{ stats.pending_returns }}
+    </p>
+    <p class="text-sm text-gray-400 mt-0.5">Pending returns</p>
+  </div>
+
+</div>
+
+<!-- ── Middle row: Chart + Quick actions ──────────────── -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+
+  <!-- Revenue chart -->
+  <div class="lg:col-span-2 bg-white rounded-2xl shadow-card p-5 border border-gray-50">
+    <div class="flex items-center justify-between mb-5">
+      <div>
+        <h3 class="font-display font-bold text-navy text-base">Revenue Overview</h3>
+        <p class="text-xs text-gray-400">Last 6 months</p>
+      </div>
+      <div class="w-8 h-8 rounded-lg bg-teal/10 flex items-center justify-center">
+        <i data-lucide="trending-up" class="w-4 h-4 text-teal"></i>
+      </div>
+    </div>
+    <canvas id="revenueChart" height="120"></canvas>
+  </div>
+
+  <!-- Quick actions -->
+  <div class="bg-white rounded-2xl shadow-card p-5 border border-gray-50">
+    <h3 class="font-display font-bold text-navy text-base mb-4">Quick Actions</h3>
+    <div class="space-y-3">
+
+      <a href="#" class="flex items-center gap-3 p-3 rounded-xl bg-teal/5 border border-teal/20
+                         hover:bg-teal/10 transition-colors cursor-not-allowed opacity-60 group"
+         title="Available in Phase 2">
+        <div class="w-9 h-9 rounded-lg bg-teal flex items-center justify-center flex-shrink-0">
+          <i data-lucide="plus-circle" class="w-4 h-4 text-navy"></i>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-navy">New Sale</p>
+          <p class="text-xs text-gray-400">Phase 2</p>
+        </div>
+        <i data-lucide="arrow-right" class="w-4 h-4 text-gray-300 ml-auto"></i>
+      </a>
+
+      <a href="#" class="flex items-center gap-3 p-3 rounded-xl bg-navy/5 border border-navy/10
+                         hover:bg-navy/10 transition-colors cursor-not-allowed opacity-60"
+         title="Available in Phase 2">
+        <div class="w-9 h-9 rounded-lg bg-navy flex items-center justify-center flex-shrink-0">
+          <i data-lucide="package-plus" class="w-4 h-4 text-teal"></i>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-navy">Add Product</p>
+          <p class="text-xs text-gray-400">Phase 2</p>
+        </div>
+        <i data-lucide="arrow-right" class="w-4 h-4 text-gray-300 ml-auto"></i>
+      </a>
+
+      <a href="#" class="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100
+                         hover:bg-gray-100 transition-colors cursor-not-allowed opacity-60"
+         title="Available in Phase 3">
+        <div class="w-9 h-9 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="bar-chart-2" class="w-4 h-4 text-gray-500"></i>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-gray-500">View Reports</p>
+          <p class="text-xs text-gray-400">Phase 3</p>
+        </div>
+        <i data-lucide="arrow-right" class="w-4 h-4 text-gray-300 ml-auto"></i>
+      </a>
+
+      <a href="{{ url_for('auth.change_password') }}"
+         class="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100
+                hover:bg-gray-100 transition-colors">
+        <div class="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="key-round" class="w-4 h-4 text-navy"></i>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-navy">Change Password</p>
+          <p class="text-xs text-gray-400">Account security</p>
+        </div>
+        <i data-lucide="arrow-right" class="w-4 h-4 text-gray-300 ml-auto"></i>
+      </a>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Bottom row: Recent sales + top products ─────── -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+  <!-- Recent sales -->
+  <div class="bg-white rounded-2xl shadow-card p-5 border border-gray-50">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-display font-bold text-navy text-base">Recent Sales</h3>
+      <span class="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">Last 5</span>
+    </div>
+    {% if stats.recent_sales %}
+    <div class="space-y-2">
+      {% for sale in stats.recent_sales %}
+      <div class="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-teal/10 flex items-center justify-center flex-shrink-0">
+            <i data-lucide="receipt" class="w-3.5 h-3.5 text-teal"></i>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-navy">{{ sale.invoice_number }}</p>
+            <p class="text-xs text-gray-400">{{ sale.customer }}</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <p class="text-sm font-bold text-navy">₹{{ '{:,.0f}'.format(sale.grand_total) }}</p>
+          <span class="text-xs px-1.5 py-0.5 rounded-full
+            {% if sale.payment_mode == 'cash' %}bg-green-50 text-green-600
+            {% elif sale.payment_mode == 'upi' %}bg-blue-50 text-blue-600
+            {% elif sale.payment_mode == 'card' %}bg-purple-50 text-purple-600
+            {% else %}bg-gray-50 text-gray-500{% endif %}">
+            {{ sale.payment_mode|upper }}
+          </span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="flex flex-col items-center justify-center py-10 text-center">
+      <div class="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-3">
+        <i data-lucide="shopping-bag" class="w-6 h-6 text-gray-300"></i>
+      </div>
+      <p class="text-sm text-gray-400 font-medium">No sales yet</p>
+      <p class="text-xs text-gray-300 mt-1">Sales module available in Phase 2</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Top products + payment split -->
+  <div class="bg-white rounded-2xl shadow-card p-5 border border-gray-50">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-display font-bold text-navy text-base">Payment Split</h3>
+      <span class="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">Today</span>
+    </div>
+    {% if stats.payment_split %}
+    <canvas id="paymentChart" height="160"></canvas>
+    {% else %}
+    <div class="flex flex-col items-center justify-center py-8 text-center">
+      <div class="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-3">
+        <i data-lucide="pie-chart" class="w-6 h-6 text-gray-300"></i>
+      </div>
+      <p class="text-sm text-gray-400 font-medium">No payment data yet</p>
+      <p class="text-xs text-gray-300 mt-1">Charts appear once sales are recorded</p>
+    </div>
+    {% endif %}
+
+    <!-- System info panel -->
+    <div class="mt-5 p-4 rounded-xl bg-navy/3 border border-gray-100">
+      <p class="text-xs font-semibold text-navy mb-2 flex items-center gap-1.5">
+        <i data-lucide="info" class="w-3.5 h-3.5 text-teal"></i>
+        System Info
+      </p>
+      <div class="space-y-1.5 text-xs">
+        <div class="flex justify-between">
+          <span class="text-gray-400">Logged in as</span>
+          <span class="font-semibold text-navy">{{ current_user.full_name }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Role</span>
+          <span class="font-semibold text-navy capitalize">{{ current_user.role }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Phase</span>
+          <span class="font-semibold text-teal">1 — Foundation</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-400">App Version</span>
+          <span class="font-mono text-navy">v1.0.0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Revenue chart ─────────────────────────────────────
+const revData = {
+  labels: [{% for r in stats.monthly_revenue %}"{{ r.month }}"{% if not loop.last %},{% endif %}{% endfor %}],
+  data:   [{% for r in stats.monthly_revenue %}{{ r.total }}{% if not loop.last %},{% endif %}{% endfor %}]
+};
+
+if (document.getElementById('revenueChart')) {
+  new Chart(document.getElementById('revenueChart'), {
+    type: 'line',
+    data: {
+      labels: revData.labels.length ? revData.labels : ['Jan','Feb','Mar','Apr','May','Jun'],
+      datasets: [{
+        label: 'Revenue (₹)',
+        data:  revData.data.length   ? revData.data   : [0,0,0,0,0,0],
+        fill: true,
+        borderColor: '#00B4D8',
+        backgroundColor: 'rgba(0,180,216,0.08)',
+        tension: 0.45,
+        pointBackgroundColor: '#00B4D8',
+        pointRadius: 4,
+        pointHoverRadius: 7,
+        borderWidth: 2.5,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0D1B3E',
+          titleColor: '#90E0EF',
+          bodyColor: '#fff',
+          callbacks: {
+            label: ctx => ' ₹' + ctx.parsed.y.toLocaleString('en-IN')
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#94A3B8' } },
+        y: {
+          grid: { color: 'rgba(0,0,0,0.04)' },
+          ticks: {
+            font: { size: 11 }, color: '#94A3B8',
+            callback: v => '₹' + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v)
+          }
+        }
+      }
+    }
+  });
+}
+
+// ── Payment split chart ───────────────────────────────
+const payData = {{ stats.payment_split | tojson }};
+if (document.getElementById('paymentChart') && Object.keys(payData).length) {
+  const colors = { cash:'#2DC653', upi:'#00B4D8', card:'#6D28D9', credit:'#E63946', split:'#F59E0B' };
+  new Chart(document.getElementById('paymentChart'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(payData).map(k => k.toUpperCase()),
+      datasets: [{
+        data: Object.values(payData),
+        backgroundColor: Object.keys(payData).map(k => colors[k] || '#94A3B8'),
+        borderWidth: 0,
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      cutout: '68%',
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { font: { size: 11, family: 'DM Sans' }, color: '#1A2F5A', boxWidth: 12, padding: 12 }
+        }
+      }
+    }
+  });
+}
+</script>
+{% endblock %}
