@@ -1,5 +1,5 @@
 # Billing System — Phase 1
-### BCA 5th Semester Final Project | Shoolini Online
+### BCA 5th Semester Project | Shoolini Online
 
 **Stack:** Python Flask + MySQL + Tailwind CSS
 
